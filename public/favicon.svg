@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1a56db"/>
+  <g transform="translate(256,256)">
+    <!-- Shield shape -->
+    <path d="M0-160 L120-100 L120 60 Q120 140 0 180 Q-120 140 -120 60 L-120-100 Z" fill="white" opacity="0.95"/>
+    <!-- Check mark -->
+    <path d="M-50 20 L-15 55 L60-30" stroke="#1a56db" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <!-- Clock arc at top -->
+    <circle cx="0" cy="-80" r="30" fill="none" stroke="#1a56db" stroke-width="6"/>
+    <line x1="0" y1="-95" x2="0" y2="-80" stroke="#1a56db" stroke-width="6" stroke-linecap="round"/>
+    <line x1="0" y1="-80" x2="12" y2="-72" stroke="#1a56db" stroke-width="6" stroke-linecap="round"/>
+  </g>
+</svg>
