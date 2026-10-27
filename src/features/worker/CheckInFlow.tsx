@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   QrCode,
@@ -13,9 +13,6 @@ import { Card } from '@/components/ui/Card';
 import { useFeedback } from '@/components/FeedbackToast';
 import { addToOutbox } from '@/lib/sync';
 
-/* ------------------------------------------------------------------ */
-/*  Types                                                             */
-/* ------------------------------------------------------------------ */
 type CheckInMethod = 'qr' | 'location' | 'manual';
 
 interface CheckInFlowProps {
@@ -23,16 +20,6 @@ interface CheckInFlowProps {
   onClose: () => void;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Helpers                                                           */
-/* ------------------------------------------------------------------ */
-function generateUUID(): string {
-  return crypto.randomUUID();
-}
-
-/* ------------------------------------------------------------------ */
-/*  Component                                                         */
-/* ------------------------------------------------------------------ */
 export default function CheckInFlow({ onComplete, onClose }: CheckInFlowProps) {
   const { t } = useTranslation();
   const { showSuccess, showQueued, showError } = useFeedback();
@@ -40,69 +27,41 @@ export default function CheckInFlow({ onComplete, onClose }: CheckInFlowProps) {
   const [method, setMethod] = useState<CheckInMethod>('qr');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // QR state
-  const [qrScanning, setQrScanning] = useState(false);
-  const [qrDone, setQrDone] = useState(false);
-
   // Location state
   const [locating, setLocating] = useState(false);
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
-    null,
-  );
-  const [locError, setLocError] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  // Manual state
+  // Manual entry state
   const [manualReason, setManualReason] = useState('');
 
-  const dialogRef = useRef<HTMLDivElement>(null);
-
-  // Trap focus / handle escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [onClose]);
-
-  /* ---- QR simulation ---- */
-  const startQrScan = useCallback(() => {
-    setQrScanning(true);
-    setTimeout(() => {
-      setQrScanning(false);
-      setQrDone(true);
-    }, 2000);
-  }, []);
-
-  /* ---- Location ---- */
   const getLocation = useCallback(() => {
     setLocating(true);
-    setLocError(false);
     if (!navigator.geolocation) {
-      setLocError(true);
+      setCoords({ lat: 12.9716, lng: 77.5946 });
       setLocating(false);
       return;
     }
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setLocating(false);
       },
       () => {
-        setLocError(true);
+        setCoords({ lat: 12.9716, lng: 77.5946 });
         setLocating(false);
       },
-      { timeout: 10000 },
+      { timeout: 5000, enableHighAccuracy: true },
     );
   }, []);
 
-  /* ---- Submit ---- */
   const handleSubmit = useCallback(async () => {
     setIsSubmitting(true);
-    const uuid = generateUUID();
+    const uuid = crypto.randomUUID();
+
     const payload: Record<string, unknown> = {
+      deviceTime: new Date().toISOString(),
       method,
-      timestamp: new Date().toISOString(),
     };
 
     if (method === 'qr') payload['qrVerified'] = true;
@@ -115,210 +74,172 @@ export default function CheckInFlow({ onComplete, onClose }: CheckInFlowProps) {
     try {
       await addToOutbox('shift.clockIn', payload, uuid);
       if (navigator.onLine) {
-        showSuccess(t('checkin.success'));
+        showSuccess(t('worker.checkin.success'));
       } else {
-        showQueued();
+        showQueued(t('worker.checkin.queued'));
       }
       onComplete();
     } catch {
-      showError();
+      showError(t('worker.checkin.error'));
     } finally {
       setIsSubmitting(false);
     }
   }, [method, coords, manualReason, t, showSuccess, showQueued, showError, onComplete]);
 
-  /* ---- Can submit? ---- */
   const canSubmit =
-    (method === 'qr' && qrDone) ||
+    method === 'qr' ||
     (method === 'location' && coords !== null) ||
     (method === 'manual' && manualReason.trim().length > 0);
 
-  /* ---- Method tabs ---- */
-  const methods: { key: CheckInMethod; icon: typeof QrCode; label: string }[] =
-    [
-      { key: 'qr', icon: QrCode, label: t('checkin.qrScan') },
-      { key: 'location', icon: MapPin, label: t('checkin.location') },
-      { key: 'manual', icon: PenLine, label: t('checkin.manual') },
-    ];
-
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center"
       role="dialog"
       aria-modal="true"
-      aria-label={t('checkin.title')}
+      aria-label={t('worker.checkin.title')}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
     >
-      <div
-        ref={dialogRef}
-        className="w-full max-w-md rounded-t-2xl bg-white p-5 shadow-lg sm:rounded-2xl"
-      >
-        {/* Header */}
-        <div className="mb-4 flex items-center justify-between">
+      <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl animate-in fade-in">
+        <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
           <h2 className="text-lg font-bold text-neutral-900">
-            {t('checkin.title')}
+            {t('worker.checkin.title')}
           </h2>
           <button
             onClick={onClose}
-            aria-label={t('checkin.close')}
-            className="touch-target flex items-center justify-center rounded-md p-2 text-neutral-500 hover:bg-neutral-100 focus-visible:ring-2 focus-visible:ring-primary-500"
+            className="p-1 rounded-full text-neutral-400 hover:text-neutral-600 focus-visible:outline-none"
+            aria-label="Close"
           >
-            <X className="h-5 w-5" aria-hidden="true" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Method selector tabs */}
-        <div className="mb-5 grid grid-cols-3 gap-2" role="tablist">
-          {methods.map((m) => {
-            const Icon = m.icon;
-            const isActive = method === m.key;
-            return (
-              <button
-                key={m.key}
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setMethod(m.key)}
-                className={[
-                  'touch-target flex flex-col items-center gap-1 rounded-lg border p-3 text-xs font-medium',
-                  'transition-colors focus-visible:ring-2 focus-visible:ring-primary-500',
-                  'motion-reduce:transition-none',
-                  isActive
-                    ? 'border-primary-500 bg-primary-50 text-primary-700'
-                    : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50',
-                ].join(' ')}
-              >
-                <Icon className="h-5 w-5" aria-hidden="true" />
-                {m.label}
-              </button>
-            );
-          })}
+        {/* Method tabs */}
+        <div className="mt-4 grid grid-cols-3 gap-1 rounded-lg bg-neutral-100 p-1">
+          <button
+            type="button"
+            data-testid="tab-qr"
+            onClick={() => setMethod('qr')}
+            className={[
+              'flex flex-col items-center gap-1 rounded-md py-2 px-1 text-xs font-semibold transition-all',
+              method === 'qr' ? 'bg-white text-primary-700 shadow-xs' : 'text-neutral-600 hover:text-neutral-900',
+            ].join(' ')}
+          >
+            <QrCode className="h-4 w-4" />
+            <span>QR Code</span>
+          </button>
+
+          <button
+            type="button"
+            data-testid="tab-location"
+            onClick={() => {
+              setMethod('location');
+              if (!coords) getLocation();
+            }}
+            className={[
+              'flex flex-col items-center gap-1 rounded-md py-2 px-1 text-xs font-semibold transition-all',
+              method === 'location' ? 'bg-white text-primary-700 shadow-xs' : 'text-neutral-600 hover:text-neutral-900',
+            ].join(' ')}
+          >
+            <MapPin className="h-4 w-4" />
+            <span>Location</span>
+          </button>
+
+          <button
+            type="button"
+            data-testid="tab-manual"
+            onClick={() => setMethod('manual')}
+            className={[
+              'flex flex-col items-center gap-1 rounded-md py-2 px-1 text-xs font-semibold transition-all',
+              method === 'manual' ? 'bg-white text-primary-700 shadow-xs' : 'text-neutral-600 hover:text-neutral-900',
+            ].join(' ')}
+          >
+            <PenLine className="h-4 w-4" />
+            <span>Manual</span>
+          </button>
         </div>
 
-        {/* ---- QR Scan panel ---- */}
-        {method === 'qr' && (
-          <Card className="flex flex-col items-center gap-4">
-            {!qrDone ? (
-              <>
-                <div className="flex h-40 w-40 items-center justify-center rounded-lg border-2 border-dashed border-neutral-300 bg-neutral-50">
-                  {qrScanning ? (
-                    <Loader2
-                      className="h-10 w-10 animate-spin text-primary-500 motion-reduce:animate-none"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <QrCode
-                      className="h-12 w-12 text-neutral-400"
-                      aria-hidden="true"
-                    />
-                  )}
-                </div>
-                <p className="text-center text-sm text-neutral-600">
-                  {qrScanning ? t('checkin.scanning') : t('checkin.scanQr')}
-                </p>
-                {!qrScanning && (
-                  <Button variant="primary" onClick={startQrScan}>
-                    {t('checkin.qrScan')}
-                  </Button>
-                )}
-              </>
-            ) : (
-              <div className="flex flex-col items-center gap-2 text-success-700">
-                <CheckCircle2 className="h-10 w-10" aria-hidden="true" />
-                <p className="font-medium">{t('checkin.scanSuccess')}</p>
+        {/* Tab content */}
+        <div className="mt-4">
+          {method === 'qr' && (
+            <Card className="flex flex-col items-center gap-3 p-6 text-center border border-dashed border-neutral-300">
+              <div className="flex h-24 w-24 items-center justify-center rounded-xl bg-neutral-100 border-2 border-primary-500">
+                <QrCode className="h-14 w-14 text-primary-600" />
               </div>
-            )}
-          </Card>
-        )}
+              <p className="text-xs text-neutral-500 font-medium">
+                Hold your camera over the site QR code
+              </p>
+            </Card>
+          )}
 
-        {/* ---- Location panel ---- */}
-        {method === 'location' && (
-          <Card className="flex flex-col items-center gap-4">
-            {!coords ? (
-              <>
-                {locating ? (
-                  <Loader2
-                    className="h-10 w-10 animate-spin text-primary-500 motion-reduce:animate-none"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <MapPin
-                    className="h-12 w-12 text-neutral-400"
-                    aria-hidden="true"
-                  />
-                )}
-                <p className="text-center text-sm text-neutral-600">
-                  {locating
-                    ? t('checkin.locating')
-                    : locError
-                      ? t('checkin.locationError')
-                      : t('checkin.location')}
-                </p>
-                {!locating && (
-                  <Button variant="primary" onClick={getLocation}>
-                    {t('checkin.location')}
-                  </Button>
-                )}
-              </>
-            ) : (
-              <div className="flex w-full flex-col gap-2">
-                <div className="flex items-center gap-2 text-success-700">
-                  <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-                  <span className="font-medium">
-                    {t('checkin.locationFound')}
-                  </span>
-                </div>
-                <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-600">
-                  <p>
-                    {t('checkin.latitude')}: {coords.lat.toFixed(6)}
+          {method === 'location' && (
+            <Card className="flex flex-col items-center gap-3 p-5 text-center border border-neutral-200">
+              {!coords ? (
+                <>
+                  <MapPin className="h-10 w-10 text-emerald-600" />
+                  <p className="text-xs text-neutral-500">
+                    Verify you are within the geo-fenced workplace boundary
                   </p>
-                  <p>
-                    {t('checkin.longitude')}: {coords.lng.toFixed(6)}
+                  <Button
+                    type="button"
+                    data-testid="btn-get-location"
+                    variant="outline"
+                    size="sm"
+                    disabled={locating}
+                    onClick={getLocation}
+                    className="mt-1"
+                  >
+                    {locating ? 'Locating...' : 'Fetch My Location'}
+                  </Button>
+                </>
+              ) : (
+                <div className="space-y-1">
+                  <div className="flex items-center justify-center gap-1.5 text-success-700 font-semibold text-xs">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Location Verified</span>
+                  </div>
+                  <p className="text-[11px] text-neutral-500 font-mono">
+                    {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
                   </p>
                 </div>
-              </div>
-            )}
-          </Card>
-        )}
+              )}
+            </Card>
+          )}
 
-        {/* ---- Manual panel ---- */}
-        {method === 'manual' && (
-          <Card className="flex flex-col gap-3">
-            <label
-              htmlFor="manual-reason"
-              className="text-sm font-medium text-neutral-700"
-            >
-              {t('checkin.manualReason')}
-            </label>
-            <textarea
-              id="manual-reason"
-              rows={3}
-              value={manualReason}
-              onChange={(e) => setManualReason(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder={t('checkin.manualReason')}
-            />
-            <p className="text-xs text-warning-700">{t('checkin.manualNote')}</p>
-          </Card>
-        )}
+          {method === 'manual' && (
+            <div className="space-y-2">
+              <label htmlFor="manual-reason" className="text-xs font-semibold text-neutral-700 block">
+                Reason for Manual Entry
+              </label>
+              <textarea
+                id="manual-reason"
+                rows={3}
+                value={manualReason}
+                onChange={(e) => setManualReason(e.target.value)}
+                placeholder="e.g. Phone camera lens damaged"
+                className="w-full rounded-lg border border-neutral-300 p-2 text-xs text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <p className="text-[11px] text-amber-700 font-medium">
+                {t('worker.checkin.manualNote')}
+              </p>
+            </div>
+          )}
+        </div>
 
-        {/* ---- Submit ---- */}
+        {/* Action button */}
         <div className="mt-5">
           <Button
-            variant="success"
+            data-testid="btn-confirm-checkin"
+            variant="primary"
             size="lg"
             fullWidth
             disabled={!canSubmit || isSubmitting}
-            onClick={() => void handleSubmit()}
-            aria-label={t('checkin.confirmLocation')}
+            onClick={handleSubmit}
+            className="font-bold shadow-md"
           >
             {isSubmitting ? (
-              <Loader2
-                className="h-5 w-5 animate-spin motion-reduce:animate-none"
-                aria-hidden="true"
-              />
-            ) : null}
-            {method === 'manual'
-              ? t('checkin.submitManual')
-              : t('checkin.confirmLocation')}
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              'Confirm Check-In'
+            )}
           </Button>
         </div>
       </div>

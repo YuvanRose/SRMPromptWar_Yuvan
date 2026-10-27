@@ -68,7 +68,7 @@ export const SECTORS: Record<string, SectorConfig> = {
     sitePluralLabel: 'Departments',
     supervisorLabel: 'HOD',
     workerLabel: 'Staff',
-    workerPluralLabel: 'Staff',
+    workerPluralLabel: 'Staff Members',
     shiftPatterns: [
       { id: 'morning', label: 'Morning', startHour: 8, endHour: 14 },
       { id: 'full-day', label: 'Full Day', startHour: 9, endHour: 17 },

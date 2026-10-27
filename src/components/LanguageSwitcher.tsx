@@ -4,11 +4,11 @@ import type { ChangeEvent } from 'react';
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
-  { code: 'hi', label: 'हिन्दी (Hindi)' },
-  { code: 'ta', label: 'தமிழ் (Tamil)' },
-  { code: 'te', label: 'తెలుగు (Telugu)' },
-  { code: 'kn', label: 'ಕನ್ನಡ (Kannada)' },
-  { code: 'ml', label: 'മലയാളം (Malayalam)' },
+  { code: 'hi', label: 'हिन्दी' },
+  { code: 'ta', label: 'தமிழ்' },
+  { code: 'te', label: 'తెలుగు' },
+  { code: 'kn', label: 'ಕನ್ನಡ' },
+  { code: 'ml', label: 'മലയാളം' },
 ] as const;
 
 interface LanguageSwitcherProps {
@@ -25,22 +25,22 @@ export function LanguageSwitcher({ compact = false }: LanguageSwitcherProps) {
   };
 
   return (
-    <div className="relative inline-flex items-center">
+    <div className="relative inline-flex items-center shrink-0">
       <label htmlFor="language-select" className="sr-only">
         Select Language
       </label>
-      <div className="absolute left-2.5 pointer-events-none text-neutral-500">
-        <Globe className="w-4 h-4" aria-hidden="true" />
+      <div className="absolute left-2 pointer-events-none text-neutral-500">
+        <Globe className="w-3.5 h-3.5" aria-hidden="true" />
       </div>
       <select
         id="language-select"
         value={i18n.language ? i18n.language.slice(0, 2) : 'en'}
         onChange={handleLanguageChange}
         className={[
-          'bg-white border border-neutral-300 text-neutral-800 rounded-md text-sm',
+          'bg-white border border-neutral-300 text-neutral-800 rounded-md font-medium',
           'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
           'cursor-pointer min-h-touch',
-          compact ? 'pl-8 pr-2 py-1.5' : 'pl-9 pr-6 py-2',
+          compact ? 'pl-7 pr-2 py-1 text-xs max-w-[110px]' : 'pl-8 pr-4 py-2 text-sm',
         ].join(' ')}
       >
         {LANGUAGES.map((lang) => (
