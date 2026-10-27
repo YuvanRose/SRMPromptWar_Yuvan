@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LogIn, Shield, HardHat, GraduationCap, ArrowRight } from 'lucide-react';
+import { LogIn, HardHat, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Button } from '@/components/ui/Button';
@@ -23,7 +23,6 @@ export function LoginPage() {
     setIsLoading(true);
     try {
       await login(userToLogin, passToLogin);
-      // Retrieve the role from the login
       const stored = localStorage.getItem('fairshift_profile');
       if (stored) {
         const profile = JSON.parse(stored);

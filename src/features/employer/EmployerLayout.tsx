@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   Users,
   LogOut,
-  Building,
   Menu,
   X,
 } from 'lucide-react';

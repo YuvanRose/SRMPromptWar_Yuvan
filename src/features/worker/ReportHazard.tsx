@@ -11,7 +11,6 @@ import {
   Trash2,
   Play,
   Pause,
-  CheckCircle2,
 } from 'lucide-react';
 import { z } from 'zod';
 import { useAuth } from '@/lib/auth';

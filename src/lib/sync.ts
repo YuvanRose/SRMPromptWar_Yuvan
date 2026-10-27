@@ -22,8 +22,9 @@ function backoffDelay(retryCount: number): number {
 export async function addToOutbox(
   type: string,
   payload: Record<string, unknown>,
+  customUuid?: string,
 ): Promise<void> {
-  const clientUuid = crypto.randomUUID();
+  const clientUuid = customUuid || crypto.randomUUID();
   await db.outbox.add({
     type,
     payload,

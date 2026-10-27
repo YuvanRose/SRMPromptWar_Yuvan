@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Volume2, VolumeX, Info, Download, CheckCircle2 } from 'lucide-react';
+import { Volume2, VolumeX, Info } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/lib/auth';
@@ -18,6 +18,14 @@ export function PayslipView() {
     return getPayslipForWorker(workerId, selectedPeriod);
   }, [workerId, selectedPeriod]);
 
+  const earnings = useMemo(() => {
+    return payslip.lines.filter((l) => l.type === 'earning');
+  }, [payslip]);
+
+  const deductions = useMemo(() => {
+    return payslip.lines.filter((l) => l.type === 'deduction');
+  }, [payslip]);
+
   // Read aloud feature
   const handleReadAloud = () => {
     if (!('speechSynthesis' in window)) {
@@ -33,22 +41,21 @@ export function PayslipView() {
 
     const linesToSpeak = [
       `${t('worker.payslip.title')}`,
-      `${t('worker.payslip.period', { period: payslip.period })}`,
+      `${t('worker.payslip.period', { period: payslip.periodLabel })}`,
       `${t('worker.payslip.netPay')}: ${payslip.netPay} rupees.`,
     ];
 
-    payslip.earnings.forEach((item) => {
-      linesToSpeak.push(`${t(item.labelKey)}: ${item.amount} rupees. ${t(item.explanationKey, item.explanationParams || {})}`);
+    earnings.forEach((item) => {
+      linesToSpeak.push(`${item.label}: ${item.amount} rupees. ${item.explanation}`);
     });
 
-    payslip.deductions.forEach((item) => {
-      linesToSpeak.push(`${t(item.labelKey)}: ${item.amount} rupees. ${t(item.explanationKey, item.explanationParams || {})}`);
+    deductions.forEach((item) => {
+      linesToSpeak.push(`${item.label}: ${item.amount} rupees. ${item.explanation}`);
     });
 
     const fullText = linesToSpeak.join('. ');
     const utterance = new SpeechSynthesisUtterance(fullText);
 
-    // Try finding matching voice for language
     const voices = window.speechSynthesis.getVoices();
     const currentLang = i18n.language ? i18n.language.slice(0, 2) : 'en';
     const matchedVoice = voices.find((v) => v.lang.startsWith(currentLang));
@@ -67,8 +74,8 @@ export function PayslipView() {
     return `₹${amt.toLocaleString('en-IN')}`;
   };
 
-  const toggleExplanation = (key: string) => {
-    setExpandedExplanation(expandedExplanation === key ? null : key);
+  const toggleExplanation = (label: string) => {
+    setExpandedExplanation(expandedExplanation === label ? null : label);
   };
 
   return (
@@ -124,7 +131,7 @@ export function PayslipView() {
           {formatCurrency(payslip.netPay)}
         </p>
         <p className="mt-2 text-xs text-primary-200">
-          {profile?.full_name} • {t('worker.payslip.period', { period: payslip.period })}
+          {profile?.full_name} • {payslip.periodLabel}
         </p>
       </div>
 
@@ -134,18 +141,18 @@ export function PayslipView() {
           {t('worker.payslip.earnings')}
         </h3>
         <div className="divide-y divide-neutral-100">
-          {payslip.earnings.map((item: PayslipLine) => {
-            const isExpanded = expandedExplanation === item.labelKey;
+          {earnings.map((item: PayslipLine) => {
+            const isExpanded = expandedExplanation === item.label;
             return (
-              <div key={item.labelKey} className="py-2.5">
+              <div key={item.label} className="py-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-neutral-800">
-                      {t(item.labelKey)}
+                      {item.label}
                     </span>
                     <button
                       type="button"
-                      onClick={() => toggleExplanation(item.labelKey)}
+                      onClick={() => toggleExplanation(item.label)}
                       aria-label="Explain line item"
                       className="text-neutral-400 hover:text-primary-600 focus-visible:outline-none"
                     >
@@ -158,7 +165,7 @@ export function PayslipView() {
                 </div>
                 {isExpanded && (
                   <p className="mt-1.5 text-xs text-neutral-600 bg-neutral-50 p-2.5 rounded border border-neutral-200">
-                    {t(item.explanationKey, item.explanationParams || {})}
+                    {item.explanation}
                   </p>
                 )}
               </div>
@@ -167,7 +174,7 @@ export function PayslipView() {
         </div>
         <div className="mt-3 pt-2 border-t border-neutral-200 flex justify-between font-bold text-sm text-neutral-900">
           <span>Total {t('worker.payslip.earnings')}</span>
-          <span className="text-success-700">+{formatCurrency(payslip.totalEarnings)}</span>
+          <span className="text-success-700">+{formatCurrency(payslip.grossPay)}</span>
         </div>
       </Card>
 
@@ -177,18 +184,18 @@ export function PayslipView() {
           {t('worker.payslip.deductions')}
         </h3>
         <div className="divide-y divide-neutral-100">
-          {payslip.deductions.map((item: PayslipLine) => {
-            const isExpanded = expandedExplanation === item.labelKey;
+          {deductions.map((item: PayslipLine) => {
+            const isExpanded = expandedExplanation === item.label;
             return (
-              <div key={item.labelKey} className="py-2.5">
+              <div key={item.label} className="py-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-neutral-800">
-                      {t(item.labelKey)}
+                      {item.label}
                     </span>
                     <button
                       type="button"
-                      onClick={() => toggleExplanation(item.labelKey)}
+                      onClick={() => toggleExplanation(item.label)}
                       aria-label="Explain line item"
                       className="text-neutral-400 hover:text-primary-600 focus-visible:outline-none"
                     >
@@ -201,7 +208,7 @@ export function PayslipView() {
                 </div>
                 {isExpanded && (
                   <p className="mt-1.5 text-xs text-neutral-600 bg-neutral-50 p-2.5 rounded border border-neutral-200">
-                    {t(item.explanationKey, item.explanationParams || {})}
+                    {item.explanation}
                   </p>
                 )}
               </div>

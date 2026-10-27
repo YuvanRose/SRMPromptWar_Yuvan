@@ -7,7 +7,6 @@ import {
   QrCode,
   MapPin,
   PenLine,
-  Filter,
   Check,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
@@ -177,11 +176,23 @@ export function AttendanceView() {
   const getMethodIcon = (m: AttendanceRow['method']) => {
     switch (m) {
       case 'qr':
-        return <QrCode className="w-4 h-4 text-primary-600" title="QR Check-in" />;
+        return (
+          <span title="QR Check-in">
+            <QrCode className="w-4 h-4 text-primary-600" />
+          </span>
+        );
       case 'location':
-        return <MapPin className="w-4 h-4 text-emerald-600" title="Location Check-in" />;
+        return (
+          <span title="Location Check-in">
+            <MapPin className="w-4 h-4 text-emerald-600" />
+          </span>
+        );
       case 'manual':
-        return <PenLine className="w-4 h-4 text-amber-600" title="Manual Check-in" />;
+        return (
+          <span title="Manual Check-in">
+            <PenLine className="w-4 h-4 text-amber-600" />
+          </span>
+        );
       default:
         return <span className="text-neutral-400">—</span>;
     }

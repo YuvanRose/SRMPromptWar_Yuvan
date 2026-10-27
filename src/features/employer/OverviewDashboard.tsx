@@ -7,8 +7,6 @@ import {
   AlertTriangle,
   Clock,
   ArrowRight,
-  TrendingUp,
-  CheckCircle2,
 } from 'lucide-react';
 import {
   LineChart,
@@ -28,7 +26,6 @@ import {
   getAttendanceData,
   getOvertimeData,
   getHazardReports,
-  type HazardReport,
 } from '@/lib/seed-data';
 import { Card } from '@/components/ui/Card';
 

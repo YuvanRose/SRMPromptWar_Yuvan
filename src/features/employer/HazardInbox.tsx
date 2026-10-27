@@ -2,18 +2,12 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle,
-  Clock,
-  CheckCircle2,
   Send,
-  UserCheck,
   ChevronDown,
   ChevronUp,
-  MessageSquare,
   ShieldCheck,
-  Filter,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { useSector } from '@/lib/sector';
 import { getHazardReports, type HazardReport } from '@/lib/seed-data';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -24,7 +18,6 @@ type FilterTab = 'open' | 'investigating' | 'resolved' | 'all';
 export function HazardInbox() {
   const { t } = useTranslation();
   const { profile } = useAuth();
-  const sector = useSector();
   const { showSuccess } = useFeedback();
 
   const orgId = profile?.org_id || 'demo-org-const';
@@ -32,7 +25,6 @@ export function HazardInbox() {
 
   const [reports, setReports] = useState<HazardReport[]>(initialReports);
   const [activeTab, setActiveTab] = useState<FilterTab>('open');
-  const [selectedType, setSelectedType] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(initialReports[0]?.id || null);
 
   // Per-report edit state
@@ -92,18 +84,13 @@ export function HazardInbox() {
 
   const filteredReports = useMemo(() => {
     return reports.filter((r) => {
-      // Tab filter
       if (activeTab === 'open' && (r.currentStatus === 'resolved' || r.currentStatus === 'closed'))
         return false;
       if (activeTab === 'investigating' && r.currentStatus !== 'investigating') return false;
       if (activeTab === 'resolved' && r.currentStatus !== 'resolved') return false;
-
-      // Type filter
-      if (selectedType !== 'all' && r.type !== selectedType) return false;
-
       return true;
     });
-  }, [reports, activeTab, selectedType]);
+  }, [reports, activeTab]);
 
   return (
     <div className="space-y-6">

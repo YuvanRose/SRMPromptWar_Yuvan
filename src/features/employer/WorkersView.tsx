@@ -1,14 +1,9 @@
 import { useState, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-  Users,
   Search,
   CheckCircle2,
-  Clock,
-  AlertTriangle,
   ChevronDown,
   ChevronUp,
-  Briefcase,
   Phone,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
@@ -29,7 +24,6 @@ interface WorkerItem {
 }
 
 export function WorkersView() {
-  const { t } = useTranslation();
   const { profile } = useAuth();
   const sector = useSector();
 

@@ -1,10 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Clock, TrendingUp, Calendar } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/lib/auth';
-import { getShiftsForWorker, type ShiftRecord } from '@/lib/seed-data';
+import { getShiftsForWorker } from '@/lib/seed-data';
 
 type Period = 'thisWeek' | 'lastWeek' | 'thisMonth';
 

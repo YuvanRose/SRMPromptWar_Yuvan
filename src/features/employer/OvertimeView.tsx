@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import {
   Clock,
   AlertTriangle,
-  TrendingUp,
   Sliders,
   CheckCircle2,
 } from 'lucide-react';
@@ -19,7 +18,7 @@ import {
 } from 'recharts';
 import { useAuth } from '@/lib/auth';
 import { useSector } from '@/lib/sector';
-import { getOvertimeData, type OvertimeEntry } from '@/lib/seed-data';
+import { getOvertimeData } from '@/lib/seed-data';
 import { Card } from '@/components/ui/Card';
 
 type Period = 'thisWeek' | 'lastWeek' | 'thisMonth';
@@ -43,7 +42,6 @@ export function OvertimeView() {
   }, [initialData]);
 
   const flaggedCount = sortedData.filter((d) => d.totalHours > weeklyThreshold).length;
-  const totalOTHours = sortedData.reduce((acc, d) => acc + d.overtimeHours, 0);
 
   return (
     <div className="space-y-6">

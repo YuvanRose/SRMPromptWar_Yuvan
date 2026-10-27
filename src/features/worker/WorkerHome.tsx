@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -6,13 +6,11 @@ import {
   Clock,
   AlertTriangle,
   Receipt,
-  TrendingUp,
   LogIn,
   LogOut,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useSector } from '@/lib/sector';
-import { getShiftsForWorker, type ShiftRecord } from '@/lib/seed-data';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import CheckInFlow from './CheckInFlow';
@@ -30,16 +28,6 @@ export function WorkerHome() {
   const [checkInTime, setCheckInTime] = useState<string | null>(() => {
     return localStorage.getItem('fairshift_checkin_time');
   });
-
-  const workerId = profile?.id || 'demo-wc-001';
-
-  // Fetch recent shifts
-  const recentShifts = useMemo(() => {
-    const today = new Date();
-    const start = new Date(today);
-    start.setDate(today.getDate() - 1);
-    return getShiftsForWorker(workerId, start, today);
-  }, [workerId]);
 
   const defaultShift = sector.shiftPatterns[0];
   const scheduledTimeStr = defaultShift ? `${defaultShift.startHour}:00 - ${defaultShift.endHour}:00` : '08:00 - 17:00';

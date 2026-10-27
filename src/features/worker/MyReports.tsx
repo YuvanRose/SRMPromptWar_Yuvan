@@ -8,12 +8,10 @@ import {
   ChevronUp,
   MessageSquare,
   ShieldAlert,
-  ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { getHazardReports, type HazardReport } from '@/lib/seed-data';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 
 export function MyReports() {
   const { t } = useTranslation();
